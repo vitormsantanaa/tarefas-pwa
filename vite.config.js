@@ -7,24 +7,30 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   plugins: [
-    {
-  urlPattern: /^http:\/\/localhost:8001\/.*/i,
-  handler: 'NetworkFirst',
-  options: {
-    cacheName: 'api-cache',
-    expiration: {
-      maxEntries: 50,
-      maxAgeSeconds: 60 * 60 * 24, // 24 horas
-    },
-    networkTimeoutSeconds: 10,
-    cacheableResponse: {
-      statuses: [0, 200],
-    },
-  },
-},
     vue(),
+    vueDevTools(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Movi a sua estratégia de cache para dentro do Workbox aqui:
+      workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: /^http:\/\/localhost:8001\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24, // 1 dia
+              },
+              networkTimeoutSeconds: 10,
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+        ],
+      },
       manifest: {
         id: 'com.tarefas-pwa',
         name: 'Gerenciador de Tarefas',
@@ -58,7 +64,6 @@ export default defineConfig({
         enabled: true,
       },
     }),
-    vueDevTools(),
   ],
   resolve: {
     alias: {

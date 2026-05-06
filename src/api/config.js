@@ -50,9 +50,9 @@ apiClient.interceptors.response.use(
           original.headers.Authorization = `Bearer ${data.access_token}`;
 
           return apiClient(original);
-        } catch {
-
-        }
+} catch {
+  // Token refresh failed, proceed to logout
+}
       }
 
       sessionStorage.setItem(

@@ -49,7 +49,7 @@
 import { onMounted, ref } from 'vue'
 import TaskForm from '../components/TaskForm.vue'
 import TaskItem from '../components/TaskItem.vue'
-import InstallButton from '../components/InstallButton.vue'
+import InstallButton from '@/components/InstallButton.vue';
 import { useTasksStore } from '../stores/tasks.js'
 
 const store = useTasksStore()
