@@ -5,12 +5,18 @@ const tasksApi = {
     return apiClient.get('/tasks')
   },
 
-  create(title) {
-    return apiClient.post('/tasks', { title })
+  create(data) {
+    return apiClient.post('/tasks', {
+      title: typeof data === 'string' ? data : data.title,
+      img_attachment_key: data?.imgAttachmentKey || null,
+    })
   },
 
-  update(id, data) {
-    return apiClient.patch(`/tasks/${id}`, data)
+update(id, data) {
+  return apiClient.patch(`/tasks/${id}`, {
+    title: data.title,
+    img_attachment_key: data.imgAttachmentKey,
+  })
   },
 
   remove(id) {
