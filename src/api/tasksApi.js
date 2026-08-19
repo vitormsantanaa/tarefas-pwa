@@ -13,11 +13,13 @@ const tasksApi = {
   },
 
 update(id, data) {
-  return apiClient.patch(`/tasks/${id}`, {
-    title: data.title,
-    img_attachment_key: data.imgAttachmentKey,
-  })
-  },
+  const payload = {}
+  if (data.title !== undefined) payload.title = data.title
+  if (data.imgAttachmentKey !== undefined) payload.img_attachment_key = data.imgAttachmentKey
+  if (data.done !== undefined) payload.done = data.done
+
+  return apiClient.patch(`/tasks/${id}`, payload)
+},
 
   remove(id) {
     return apiClient.delete(`/tasks/${id}`)

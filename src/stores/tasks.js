@@ -25,10 +25,21 @@ export const useTasksStore = defineStore('tasks', () => {
   }
 
   async function addTask(payload) {
-    if (!payload.title?.trim()) return;
-    error.value = null;
+    if (!payload.title?.trim()) return
+    error.value = null
     try {
-      const response = await tasksApi.create(payload)
+      // Mapeia os dados garantindo a chave correta para o backend
+      const taskData = {
+        title: payload.title.trim(),
+        img_attachment_key: payload.imgAttachmentKey ?? null,
+        latitude: payload.latitude ?? null,
+        longitude: payload.longitude ?? null,
+        geolocation_accuracy: payload.geolocation_accuracy ?? null,
+        geolocation_timestamp: payload.geolocation_timestamp ?? null,
+        location_label: payload.location_label ?? null,
+      }
+
+      const response = await tasksApi.create(taskData)
       tasks.value.push(response.data)
     } catch (err) {
       error.value = 'Erro ao adicionar tarefa.'
@@ -61,14 +72,21 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
-  async function updateTask(id, { title, imgAttachmentKey } = {}) {
-    if (title !== undefined && !title.trim()) return
+  async function updateTask(id, payload = {}) {
+    if (payload.title !== undefined && !payload.title.trim()) return
     error.value = null
-    const payload = {}
-    if (title !== undefined) payload.title = title.trim()
-    if (imgAttachmentKey != null) payload.img_attachment_key = imgAttachmentKey
+
+    const dataToUpdate = {}
+    if (payload.title !== undefined) dataToUpdate.title = payload.title.trim()
+    if (payload.imgAttachmentKey !== undefined) dataToUpdate.img_attachment_key = payload.imgAttachmentKey
+    if (payload.latitude !== undefined) dataToUpdate.latitude = payload.latitude
+    if (payload.longitude !== undefined) dataToUpdate.longitude = payload.longitude
+    if (payload.geolocation_accuracy !== undefined) dataToUpdate.geolocation_accuracy = payload.geolocation_accuracy
+    if (payload.geolocation_timestamp !== undefined) dataToUpdate.geolocation_timestamp = payload.geolocation_timestamp
+    if (payload.location_label !== undefined) dataToUpdate.location_label = payload.location_label
+
     try {
-      const response = await tasksApi.update(id, payload)
+      const response = await tasksApi.update(id, dataToUpdate)
       const index = tasks.value.findIndex((t) => t.id === id)
       if (index !== -1) tasks.value[index] = response.data
     } catch (err) {

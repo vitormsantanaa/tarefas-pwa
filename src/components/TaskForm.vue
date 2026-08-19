@@ -20,53 +20,53 @@
       </button>
     </div>
 
-  <div class="image-section">
-    <!-- Preview da imagem já salva ou capturada -->
-    <img
-      v-if="previewUrl || editingTask?.img_url"
-      :src="previewUrl || editingTask?.img_url"
-      class="image-preview"
-      alt="Imagem da tarefa"
-    />
-  
-  <div class="location-section">
-    <LocationCapture @captured="handleLocationCapture" />
-  </div>
-
-    <!-- Input com capture (padrão) -->
-    <label class="image-label" :class="{ disabled: uploading }">
-      <span v-if="uploading" class="upload-status">Enviando...</span>
-      <span v-else>Adicionar imagem</span>
-      <input
-        type="file"
-        accept="image/jpeg,image/png"
-        capture="environment"
-        class="image-input"
-        :disabled="uploading"
-        @change="handleImageChange"
+    <div class="image-section">
+      <img
+        v-if="previewUrl || editingTask?.img_url"
+        :src="previewUrl || editingTask?.img_url"
+        class="image-preview"
+        alt="Imagem da tarefa"
       />
-    </label>
 
-    <!-- Alternativa com preview ao vivo -->
-    <button
-      type="button"
-      class="task-button-secondary"
-      @click="showCameraCapture = !showCameraCapture"
-    >
-      {{ showCameraCapture ? 'Fechar câmera' : 'Abrir preview ao vivo' }}
-    </button>
+      <div class="location-section">
+        <LocationCapture @captured="handleLocationCapture" />
+      </div>
 
-    <CameraCapture
-      v-if="showCameraCapture"
-      @captured="handleCameraCapture"
-    />
-  </div>
+      <label class="image-label" :class="{ disabled: uploading }">
+        <span v-if="uploading" class="upload-status">Enviando...</span>
+        <span v-else>Adicionar imagem</span>
+        <input
+          type="file"
+          accept="image/jpeg,image/png"
+          capture="environment"
+          class="image-input"
+          :disabled="uploading"
+          @change="handleImageChange"
+        />
+      </label>
+
+      <button
+        type="button"
+        class="task-button-secondary"
+        @click="showCameraCapture = !showCameraCapture"
+      >
+        {{ showCameraCapture ? 'Fechar câmera' : 'Abrir preview ao vivo' }}
+      </button>
+
+      <CameraCapture
+        v-if="showCameraCapture"
+        @captured="handleCameraCapture"
+      />
+    </div>
   </form>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
 import tasksApi from '../api/tasksApi.js'
+import CameraCapture from './CameraCapture.vue'
+import LocationCapture from './LocationCapture.vue'
+
 
 const props = defineProps({
   editingTask: {
@@ -76,30 +76,33 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['add', 'update', 'cancel'])
+
 const newTask = ref('')
 const previewUrl = ref(null)
 const uploading = ref(false)
 const imgAttachmentKey = ref(null)
-const location =ref(null)
+const location = ref(null)
+const showCameraCapture = ref(false)
+
 function handleLocationCapture(loc) {
   location.value = loc
 }
 
-
 watch(
   () => props.editingTask,
   (task) => {
-    newTask.value = task ? task.title : '';
-    if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
+    newTask.value = task ? task.title : ''
+    if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
     previewUrl.value = null
     imgAttachmentKey.value = null
+    location.value = null
   },
 )
 
 async function handleImageChange(event) {
   const file = event.target.files[0]
   if (!file) return
-  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
   previewUrl.value = URL.createObjectURL(file)
   uploading.value = true
   try {
@@ -114,58 +117,58 @@ async function handleImageChange(event) {
   }
 }
 
+function handleCameraCapture(file) {
+  previewUrl.value = URL.createObjectURL(file)
+  uploading.value = true
+  tasksApi
+    .uploadImage(file)
+    .then((response) => {
+      imgAttachmentKey.value = response.data.attachment_key
+    })
+    .catch((err) => {
+      console.error(err)
+      previewUrl.value = null
+    })
+    .finally(() => {
+      uploading.value = false
+    })
+}
 
 function handleSubmit() {
-  if (!newTask.value.trim()) return;
+  if (!newTask.value.trim()) return
 
+  // Inclui todos os atributos de localização gerados pelo buildLocationPayload
   const payload = {
     title: newTask.value.trim(),
     imgAttachmentKey: imgAttachmentKey.value,
     latitude: location.value?.latitude ?? null,
     longitude: location.value?.longitude ?? null,
-  };
-
-  if (props.editingTask) {
-    emit('update', props.editingTask.id, payload);
-  } else {
-    emit('add', payload);
+    geolocation_accuracy: location.value?.geolocation_accuracy ?? null,
+    geolocation_timestamp: location.value?.geolocation_timestamp ?? null,
+    location_label: location.value?.location_label ?? null,
   }
 
-  newTask.value = '';
-  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
-  previewUrl.value = null;
-  imgAttachmentKey.value = null;
-  location.value = null;
+  if (props.editingTask) {
+    emit('update', props.editingTask.id, payload)
+  } else {
+    emit('add', payload)
+  }
+
+  // Reseta o estado do formulário
+  newTask.value = ''
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+  previewUrl.value = null
+  imgAttachmentKey.value = null
+  location.value = null
 }
 
 function handleCancel() {
   newTask.value = ''
-  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
   previewUrl.value = null
   imgAttachmentKey.value = null
   location.value = null
   emit('cancel')
-}
-
-import CameraCapture from './CameraCapture.vue'
-import LocationCapture from './LocationCapture.vue'
-const showCameraCapture = ref(false)
-
-function handleCameraCapture(file) {
-  previewUrl.value = URL.createObjectURL(file);
-  uploading.value = true;
-  tasksApi
-    .uploadImage(file)
-    .then((response) => {
-      imgAttachmentKey.value = response.data.attachment_key;
-    })
-    .catch((err) => {
-      console.error(err);
-      previewUrl.value = null;
-    })
-    .finally(() => {
-      uploading.value = false;
-    });
 }
 </script>
 
@@ -231,7 +234,7 @@ function handleCameraCapture(file) {
 
 .image-section {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 12px;
   padding: 10px 12px;
   background: #f8f9fa;
@@ -260,6 +263,7 @@ function handleCameraCapture(file) {
   font-size: 0.875rem;
   cursor: pointer;
   transition: background-color 0.2s;
+  align-self: flex-start;
 }
 
 .image-label:hover:not(.disabled) {
@@ -278,10 +282,8 @@ function handleCameraCapture(file) {
 .upload-status {
   color: #888;
 }
-.image-help {
-  font-size: 0.75rem;
-  color: #999;
-  margin: 0;
-  flex-basis: 100%;
+
+.location-section {
+  width: 100%;
 }
 </style>
