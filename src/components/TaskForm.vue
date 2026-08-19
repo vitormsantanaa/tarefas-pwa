@@ -28,6 +28,10 @@
       class="image-preview"
       alt="Imagem da tarefa"
     />
+  
+  <div class="location-section">
+    <LocationCapture @captured="handleLocationCapture" />
+  </div>
 
     <!-- Input com capture (padrão) -->
     <label class="image-label" :class="{ disabled: uploading }">
@@ -74,8 +78,13 @@ const props = defineProps({
 const emit = defineEmits(['add', 'update', 'cancel'])
 const newTask = ref('')
 const previewUrl = ref(null)
-const imgAttachmentKey = ref(null)
 const uploading = ref(false)
+const imgAttachmentKey = ref(null)
+const location =ref(null)
+function handleLocationCapture(loc) {
+  location.value = loc
+}
+
 
 watch(
   () => props.editingTask,
@@ -112,6 +121,8 @@ function handleSubmit() {
   const payload = {
     title: newTask.value.trim(),
     imgAttachmentKey: imgAttachmentKey.value,
+    latitude: location.value?.latitude ?? null,
+    longitude: location.value?.longitude ?? null,
   };
 
   if (props.editingTask) {
@@ -124,6 +135,7 @@ function handleSubmit() {
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
   previewUrl.value = null;
   imgAttachmentKey.value = null;
+  location.value = null;
 }
 
 function handleCancel() {
@@ -131,10 +143,12 @@ function handleCancel() {
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
   previewUrl.value = null
   imgAttachmentKey.value = null
+  location.value = null
   emit('cancel')
 }
 
 import CameraCapture from './CameraCapture.vue'
+import LocationCapture from './LocationCapture.vue'
 const showCameraCapture = ref(false)
 
 function handleCameraCapture(file) {
